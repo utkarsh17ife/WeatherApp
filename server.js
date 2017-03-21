@@ -1,11 +1,18 @@
 const express = require('express');
-const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
-const url = require('url');
-const path = require('path');
 const fs = require('fs');
-const port = process.env.PORT || 3000;
+const path = require('path');
+const https = require('https');
+const url = require('url');
+const app = express();
+
+//self signed cerificate
+const privateKey = fs.readFileSync(path.join(__dirname,'/secureKey/key.pem'))
+const certificate = fs.readFileSync(path.join(__dirname,'/secureKey/server.crt'))
+const credentials = {key: privateKey , cert: certificate}
+
+const httpsPort = process.env.PORT || 8080;
+
+
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -23,6 +30,9 @@ countryCodeName = JSON.parse(countryCodeName);
 countryCity = fs.readFileSync('./groupedCountryCityMapData');
 countryCity = JSON.parse(countryCity);
 
+
+
+//APIs
 app.get('/', (req, res)=>{
 	
 	fs.readFile(path.join(__dirname,'index.html'), (err, page)=>{
@@ -31,14 +41,11 @@ app.get('/', (req, res)=>{
 	
 })
 
-
-
 app.get('/countryList', (req, res)=>{
 	
 	res.end(JSON.stringify(countryCodeName));
 		
 })
-
 
 app.get('/cityList', (req, res)=>{
 	let url_comp = url.parse(req.url, true);
@@ -48,9 +55,11 @@ app.get('/cityList', (req, res)=>{
 	
 })
 
+const httpsServer = https.createServer(credentials, app);
 
-server.listen(port, function(){
-    console.log("server is up on port: " + port);
+//Listen
+httpsServer.listen(httpsPort, function(){
+    console.log("server is up on port: " + httpsPort);
 });
 
 
